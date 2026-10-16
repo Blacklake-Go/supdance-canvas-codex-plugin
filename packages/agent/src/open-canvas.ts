@@ -66,7 +66,8 @@ export function getAgentIdentityError(value: Identity, expectedUrl: string): str
     if (!value.agentVersion) {
         return `A legacy SupDance Canvas Agent is running at ${expectedUrl}; install version ${VERSION}, stop the old Agent, then retry.`;
     }
-    if (value.agentVersion !== VERSION) {
+    const compatibleVersion = value.agentVersion === VERSION || value.agentVersion === "0.1.0";
+    if (!compatibleVersion) {
         return `SupDance Canvas Agent version mismatch at ${expectedUrl}: running ${value.agentVersion}, expected ${VERSION}. Stop the old Agent, then retry.`;
     }
     if (value.protocolVersion !== AGENT_PROTOCOL_VERSION) {

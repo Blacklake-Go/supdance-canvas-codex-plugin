@@ -1,6 +1,6 @@
 {
   "name": "@supdance/canvas-agent",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -10,6 +10,7 @@
   },
   "files": [
     "dist",
+    "LICENSE",
     "agent-instructions.md",
     "README.md",
     "NOTICE.md"
@@ -26,7 +27,6 @@
     "@modelcontextprotocol/sdk": "^1.12.1",
     "@openai/codex": "0.146.0",
     "express": "^5.1.0",
-    "gray-matter": "^4.0.3",
     "strip-ansi": "7.2.0",
     "winston": "^3.19.0",
     "yaml": "^2.9.0",

@@ -10,7 +10,7 @@ import test from "node:test";
 import { VERSION } from "./config.js";
 import { getAgentIdentityError } from "./open-canvas.js";
 
-test("open-canvas explains when a legacy Agent without a version is already running", () => {
+test("open-canvas explains when an unidentified legacy Agent is already running", () => {
     const error = getAgentIdentityError({
         ok: true,
         service: "supdance-canvas-agent",
@@ -22,7 +22,7 @@ test("open-canvas explains when a legacy Agent without a version is already runn
     assert.match(error || "", new RegExp(VERSION.replaceAll(".", "\\.")));
 });
 
-test("open-canvas reports the running and expected Agent versions", () => {
+test("open-canvas accepts the installed 0.1.0 Agent for live-site compatibility", () => {
     const error = getAgentIdentityError({
         ok: true,
         service: "supdance-canvas-agent",
@@ -31,14 +31,14 @@ test("open-canvas reports the running and expected Agent versions", () => {
         url: "http://127.0.0.1:17372",
     }, "http://127.0.0.1:17372");
 
-    assert.match(error || "", new RegExp(`running 0\\.1\\.0, expected ${VERSION.replaceAll(".", "\\.")}`));
+    assert.equal(error, null);
 });
 
 test("open-canvas reports a protocol mismatch even when the Agent package version matches", () => {
     const error = getAgentIdentityError({
         ok: true,
         service: "supdance-canvas-agent",
-        agentVersion: "0.1.1",
+        agentVersion: VERSION,
         protocolVersion: 5,
         url: "http://127.0.0.1:17372",
     }, "http://127.0.0.1:17372");
@@ -50,13 +50,13 @@ test("open-canvas accepts the expected Agent identity", () => {
     assert.equal(getAgentIdentityError({
         ok: true,
         service: "supdance-canvas-agent",
-        agentVersion: "0.1.1",
+        agentVersion: VERSION,
         protocolVersion: 6,
         url: "http://127.0.0.1:17372",
     }, "http://127.0.0.1:17372"), null);
 });
 
-test("open reports an old Agent process instead of silently reusing it", { timeout: 10_000 }, async () => {
+test("open reuses the installed 0.1.0 Agent instead of starting a duplicate", { timeout: 10_000 }, async () => {
     await withIdentityServer({
         ok: true,
         service: "supdance-canvas-agent",
@@ -64,8 +64,8 @@ test("open reports an old Agent process instead of silently reusing it", { timeo
         protocolVersion: 6,
     }, async (url) => {
         const result = await runOpen(url);
-        assert.equal(result.code, 1);
-        assert.match(result.stderr, /version mismatch.*running 0\.1\.0, expected 0\.1\.1/i);
+        assert.equal(result.code, 0);
+        assert.match(result.stdout, /SupDance Canvas Agent ready/);
     });
 });
 
@@ -79,6 +79,11 @@ test("open explains when an unrelated service occupies the Agent port", { timeou
 
 async function withIdentityServer(identity: Record<string, unknown> | null, run: (url: string) => Promise<void>) {
     const server = http.createServer((request, response) => {
+        if (request.method === "POST" && request.url === "/launch") {
+            response.setHeader("content-type", "application/json");
+            response.end(JSON.stringify({ ok: true, url: `http://127.0.0.1:${port}/launch/test` }));
+            return;
+        }
         if (request.url !== "/identity" || !identity) {
             response.writeHead(404).end();
             return;
@@ -118,7 +123,7 @@ async function runOpen(url: string) {
     fs.writeFileSync(path.join(configDir, "canvas-agent.json"), JSON.stringify({ url, token: "open-test-token" }), { mode: 0o600 });
     const packageRoot = process.cwd();
     try {
-        return await new Promise<{ code: number | null; stderr: string }>((resolve, reject) => {
+        return await new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve, reject) => {
             const child = spawn(process.execPath, [
                 path.join(packageRoot, "node_modules/tsx/dist/cli.mjs"),
                 path.join(packageRoot, "src/index.ts"),
@@ -127,12 +132,14 @@ async function runOpen(url: string) {
             ], {
                 cwd: packageRoot,
                 env: { ...process.env, HOME: home, USERPROFILE: home },
-                stdio: ["ignore", "ignore", "pipe"],
+                stdio: ["ignore", "pipe", "pipe"],
             });
+            let stdout = "";
             let stderr = "";
+            child.stdout?.setEncoding("utf8").on("data", (chunk: string) => { stdout += chunk; });
             child.stderr?.setEncoding("utf8").on("data", (chunk: string) => { stderr += chunk; });
             child.once("error", reject);
-            child.once("close", (code) => resolve({ code, stderr }));
+            child.once("close", (code) => resolve({ code, stdout, stderr }));
         });
     } finally {
         fs.rmSync(home, { recursive: true, force: true });

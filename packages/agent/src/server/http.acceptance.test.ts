@@ -46,6 +46,24 @@ test("local Agent identity and one-use SSE tickets enforce version, origin, and 
     const queryTokenResponse = await fetch(`${baseUrl}/identity?token=acceptance-only-agent-token`);
     assert.equal(queryTokenResponse.status, 401, "the long-lived token must not authorize through a URL query");
 
+    const legacySseUrl = new URL(`${baseUrl}/events`);
+    legacySseUrl.searchParams.set("token", token);
+    legacySseUrl.searchParams.set("clientId", "legacy-client");
+    const legacySse = await fetch(legacySseUrl, { headers: { accept: "text/event-stream", origin } });
+    assert.equal(legacySse.status, 200, "the configured SupDance site may use its legacy EventSource contract");
+    await legacySse.body?.cancel();
+
+    const wrongLegacyTokenUrl = new URL(legacySseUrl);
+    wrongLegacyTokenUrl.searchParams.set("token", "wrong-token");
+    const wrongLegacyToken = await fetch(wrongLegacyTokenUrl, { headers: { accept: "text/event-stream", origin } });
+    assert.equal(wrongLegacyToken.status, 401);
+
+    const noLegacyOrigin = await fetch(legacySseUrl);
+    assert.equal(noLegacyOrigin.status, 401);
+
+    const wrongLegacyOrigin = await fetch(legacySseUrl, { headers: { accept: "text/event-stream", origin: "https://evil.example" } });
+    assert.equal(wrongLegacyOrigin.status, 403);
+
     const originTicket = await issueTicket(baseUrl, token, "origin-bound-client");
     const wrongOrigin = await getEvents(baseUrl, originTicket, "origin-bound-client", "https://evil.example");
     assert.equal(wrongOrigin.status, 403);

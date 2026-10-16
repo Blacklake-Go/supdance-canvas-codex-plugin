@@ -127,12 +127,23 @@ export function startHttpServer() {
     app.get("/config", (_req, res) => res.json({ ok: true, protocolVersion: AGENT_PROTOCOL_VERSION, url: config.url, hasToken: true }));
     app.get("/events", (req, res) => {
         const ticket = String(req.query.ticket || "");
-        const grant = eventTickets.get(ticket);
-        eventTickets.delete(ticket);
         const origin = String(req.headers.origin || "");
         const clientId = String(req.query.clientId || "");
-        if (!grant || Date.now() > grant.expiresAt || grant.origin !== origin || grant.clientId !== clientId) {
-            return void res.status(401).json({ ok: false, error: "invalid event ticket" });
+        if (ticket) {
+            const grant = eventTickets.get(ticket);
+            eventTickets.delete(ticket);
+            if (!grant || Date.now() > grant.expiresAt || grant.origin !== origin || grant.clientId !== clientId) {
+                return void res.status(401).json({ ok: false, error: "invalid event ticket" });
+            }
+        } else {
+            // The production site still uses its older EventSource contract, which
+            // cannot attach the token header and therefore sends the token in the
+            // SSE query. Keep that legacy path limited to the configured SupDance
+            // origin and this one endpoint; ticketed SSE remains preferred.
+            const token = String(req.query.token || "");
+            if (origin !== "https://canvas.supdance.com" || !config.origins?.includes(origin) || !clientId || !safeTokenEqual(token, config.token)) {
+                return void res.status(401).json({ ok: false, error: "invalid event ticket or legacy token" });
+            }
         }
         session.openEvents(requestUrl(req, config), res, ensureSiteWorkspace(config).activeThreadId || "");
     });
@@ -587,6 +598,13 @@ function setCors(req: Request, res: Response, url: URL, config: CanvasAgentConfi
 function validToken(req: Request, _url: URL, token: string) {
     const header = req.headers["x-canvas-agent-token"];
     return header === token || (Array.isArray(header) && header.includes(token));
+}
+
+/** Constant-time comparison for the legacy EventSource URL token. */
+function safeTokenEqual(candidate: string, expected: string) {
+    const candidateBytes = Buffer.from(candidate);
+    const expectedBytes = Buffer.from(expected);
+    return candidateBytes.length === expectedBytes.length && crypto.timingSafeEqual(candidateBytes, expectedBytes);
 }
 
 /** 向 Agent 提示词追加本轮图片附件引用说明。 */

@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import matter from "gray-matter";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
 const NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -317,25 +316,36 @@ function assertRevision(expected: string, current: string) {
 }
 
 function serializeSkill(frontmatter: Record<string, unknown>, instructions: string) {
-    return matter.stringify(`${instructions.trim()}\n`, frontmatter);
+    const yaml = stringifyYaml(frontmatter, { defaultKeyType: "PLAIN", defaultStringType: "PLAIN" }).trimEnd();
+    return `---\n${yaml}\n---\n${instructions.trim()}\n`;
 }
 
 async function readSkill(filePath: string, expectedName: string): Promise<SkillDocument> {
     const raw = await fs.readFile(filePath, "utf8");
-    let parsed: matter.GrayMatterFile<string>;
+    let data: unknown;
+    let content: string;
     try {
-        parsed = matter(raw);
+        const parsed = parseSkillFrontmatter(raw);
+        data = parseYaml(parsed.yaml);
+        content = parsed.content;
     } catch {
         throw new SkillStoreError("SKILL.md frontmatter 格式无效", 409);
     }
-    const frontmatter = recordValue(parsed.data);
+    const frontmatter = recordValue(data);
     if (frontmatter.name !== expectedName) throw new SkillStoreError("SKILL.md 中的名称与目录不一致", 409);
     return {
         raw,
         frontmatter,
         description: skillDescription(frontmatter.description),
-        instructions: skillInstructions(parsed.content),
+        instructions: skillInstructions(content),
     };
+}
+
+/** 读取技能文档开头的 YAML frontmatter，避免额外引入旧版 YAML 解析依赖。 */
+function parseSkillFrontmatter(raw: string) {
+    const match = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/.exec(raw);
+    if (!match) throw new Error("missing YAML frontmatter");
+    return { yaml: match[1], content: raw.slice(match[0].length) };
 }
 
 async function readOpenAi(filePath: string, expectedName: string): Promise<OpenAiDocument> {
