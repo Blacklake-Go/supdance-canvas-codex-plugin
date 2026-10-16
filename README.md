@@ -9,7 +9,7 @@
 - Node.js：18 或更新版本
 - 目标网站：`https://canvas.supdance.com/canvas`
 
-Agent 0.1.2 首选站点连接票据协议：网页通过 `POST /events-ticket` 获取一次性 SSE 票据，再连接 `GET /events?ticket=...`。票据有效期为 60 秒；断线后沿用浏览器约 3 秒的重试节奏申请新票据，连续失败时显示离线并保留手动重连。为兼容当前线上旧版网页，Agent 也允许已配置的 SupDance Canvas 来源通过 `/events` SSE 查询携带 token；该兼容只作用于 SSE 路由，其他 API 不接受 URL token。网站上线票据协议后会自动优先使用一次性票据。
+Agent 0.1.2 提供一次性票据 SSE 模式：配套网站前端升级后，可通过 `POST /events-ticket` 获取票据，再连接 `GET /events?ticket=...`。票据有效期为 60 秒；网站前端断线后应沿用浏览器约 3 秒的重试节奏重新申请票据，并在连续失败时显示离线、保留手动重连。当前线上页面仍使用旧 SSE 协议，因此 Agent 0.1.2 保留受限兼容入口：只有已配置的 SupDance Canvas 来源可在 `/events` SSE 查询中携带 token；其他 API 不接受 URL token。网站前端改造不包含在此仓库。
 
 **网站兼容状态：** Agent 0.1.2 可连接当前线上旧协议，也支持网站升级后采用一次性票据。网站源码、补丁和部署文件均由独立的网站仓库管理。
 
