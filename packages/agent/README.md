@@ -17,6 +17,8 @@ supdance-canvas-agent
 `open --handoff` starts or reuses the Agent and returns a short-lived local
 link for the Codex browser. `open` uses the system browser. `mcp` serves Codex
 tools over stdio. The final command runs the local HTTP Agent in the foreground.
+The Agent invokes the Codex CLI found on the host `PATH`; set `CODEX_CLI_PATH`
+if Codex is installed outside that path.
 
 Both processes use `~/.supdance-canvas/canvas-agent.json` and protocol 6.
 Only `https://canvas.supdance.com` is permitted as a browser Origin. Ticketed
