@@ -1,20 +1,23 @@
 {
   "name": "supdance-canvas",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Connect Codex to the SupDance web canvas through the local SupDance Canvas Agent.",
   "author": { "name": "SupDance", "url": "https://canvas.supdance.com" },
   "homepage": "https://canvas.supdance.com/canvas",
+  "repository": "https://github.com/Blacklake-Go/supdance-canvas-codex-plugin",
   "license": "MIT",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "SupDance Canvas",
-    "shortDescription": "Open and operate your SupDance canvas from Codex.",
-    "longDescription": "Starts a local SupDance Agent, connects the SupDance canvas website, and gives Codex canvas tools.",
+    "shortDescription": "SupDance canvas for Codex",
+    "longDescription": "Connect Codex to your SupDance canvas through a local desktop Agent. Read and summarize the current canvas, create and edit nodes, and use the available canvas workflows. Requires the SupDance Canvas Agent, Node.js 18+, and a locally running Codex desktop session. Generation is performed only when requested and subject to the connected canvas account’s limits.",
     "developerName": "SupDance",
     "category": "Productivity",
-    "capabilities": ["Canvas", "MCP", "Creative Workflow"],
+    "capabilities": ["Read current canvas", "Create and edit canvas nodes", "Run supported canvas workflows"],
     "websiteURL": "https://canvas.supdance.com/canvas",
+    "composerIcon": "./assets/logo.png",
+    "logo": "./assets/logo.png",
     "defaultPrompt": ["打开 SupDance 画布", "读取当前画布并总结节点", "在当前画布创建提示词流程"]
   }
 }

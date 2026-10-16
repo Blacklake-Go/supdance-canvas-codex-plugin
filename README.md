@@ -4,7 +4,7 @@
 
 ## 适用范围
 
-- 插件名：`supdance-canvas`，版本 `0.1.2`
+- 插件名：`supdance-canvas`，版本 `0.1.3`
 - 本地 Agent：`@supdance/canvas-agent`，版本 `0.1.2`
 - Node.js：18 或更新版本
 - 目标网站：`https://canvas.supdance.com/canvas`

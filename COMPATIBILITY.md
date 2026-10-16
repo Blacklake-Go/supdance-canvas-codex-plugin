@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | Codex CLI | 支持插件的版本 | 此次在 Codex CLI `0.163.0-alpha.10.2` 上从 GitHub 市场发现并安装 |
 | Node.js | `>=18` | Agent package 声明 Node 18 最低版本 |
-| Codex 插件 | `supdance-canvas@0.1.2` | 独立插件 manifest、技能和 MCP 配置 |
+| Codex 插件 | `supdance-canvas@0.1.3` | 独立插件 manifest、技能和 MCP 配置；附带 SupDance 徽标 |
 | 本地 Agent | `@supdance/canvas-agent@0.1.2` | 源码位于 `packages/agent/`，版本 tarball 位于 `releases/` |
 | 网站协议 | v6，兼容旧 SSE 与票据 API | 票据模式需要 `POST /events-ticket` 与 `GET /events?ticket=...`；当前线上旧版网页可用限域 SSE token 回退 |
 | 操作系统 | macOS 已检查 | Windows 和 Linux 的浏览器启动行为尚未核验 |
